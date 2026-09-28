@@ -2,7 +2,7 @@
 
 A project to do a PCB and C code for a failsafe Geofence that could in principle meet safety standards
 
-Target dev board is [FRDM-A-S32K358]https://www.nxp.com/design/design-center/development-boards-and-designs/FRDM-A-S32K358)
+Target dev board is [https://www.nxp.com/design/design-center/development-boards-and-designs/FRDM-A-S32K358](FRDM-A-S32K358)
 
 - Up to three Arm Cortex-M7 cores at 240 MHz, with a lockstep option on the core pairs
 - About 8 MB flash and roughly 1 MB or more SRAM, all with ECC, plus tightly coupled memory and caches
@@ -18,21 +18,21 @@ Target dev board is [FRDM-A-S32K358]https://www.nxp.com/design/design-center/dev
 
 ## Clock
 
-An external crystal (8 to 40 MHz) on FXOSC, monitored by the CMU against an internal oscillator.
+- An external crystal (8 to 40 MHz) on FXOSC, monitored by the CMU against an internal oscillator.
 
 ## Shutoff path 
 
-Fail-safe by design: losing power, clock or software must de-energise the motor.
-Use a dynamic enable (a toggling signal, not a static GPIO level), so a stuck pin can't hold power on.
-Two independent ways to cut the 48 V, for example the driver's STO or enable input plus a contactor or high-side switch. For Category 3, either channel alone must be able to trip.
-Read back the actual state of the shutoff, and test it periodically.
+- Fail-safe by design: losing power, clock or software must de-energise the motor.
+- Use a dynamic enable (a toggling signal, not a static GPIO level), so a stuck pin can't hold power on.
+- Two independent ways to cut the 48 V, for example the driver's STO or enable input plus a contactor or high-side switch. For Category 3, either channel alone must be able to trip.
+- Read back the actual state of the shutoff, and test it periodically.
 
 ## UART to the F9P
 
-LPUART, with DMA if you want it. Use UBX binary, not NMEA.
-Treat the F9P as untrusted. It has no safety certification.
-Check the UBX Fletcher checksum, message timeout, fix type and validity flags, accuracy estimates and the jamming/spoofing indicators. Treat a missing or stale message as outside the fence.
-The pair should cross-check each other's position over a separate link. GNSS alone is a weak input for PLd if spoofing or multipath are in scope, so consider an independent plausibility source such as odometry or an IMU.
+- LPUART, with DMA if you want it. Use UBX binary, not NMEA.
+- Treat the F9P as untrusted. It has no safety certification.
+- Check the UBX Fletcher checksum, message timeout, fix type and validity flags, accuracy estimates and the jamming/spoofing indicators. Treat a missing or stale message as outside the fence.
+- The pair should cross-check each other's position over a separate link. GNSS alone is a weak input for PLd if spoofing or multipath are in scope, so consider an independent plausibility source such as odometry or an IMU.
 
 ## Chip safety features 
 
