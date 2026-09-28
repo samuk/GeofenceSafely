@@ -2,56 +2,64 @@
 
 A project to do a PCB and C code for a failsafe Geofence that could in principle meet safety standards
 
-Target dev board is [FRDM-A-S32K358](https://www.nxp.com/design/design-center/development-boards-and-designs/FRDM-A-S32K358)
+Target dev board is  [Silplc01](https://www.st.com/en/evaluation-tools/steval-silkt01.html) officially assessed by TÜV Italia (TÜV SUD Group) in compliance with SIL 2 / PL d requirements: random failure rates, systematic capability (for the hardware), architectural constraints in accordance with IEC 61508, EN 62061, EN ISO 13849-1, and EN ISO 13849-2 standards.
 
-- Up to three Arm Cortex-M7 cores at 240 MHz, with a lockstep option on the core pairs
-- About 8 MB flash and roughly 1 MB or more SRAM, all with ECC, plus tightly coupled memory and caches
-- 128 KB data flash (usable for EEPROM emulation)
-- ISO 26262 ASIL D-capable, with a Safety Manual and FMEDA available from NXP
-- Packages: 172 HDQFP and 289 MAPBGA
-- Supply: 3.3 V or 5 V I/O
+# Geofence trip function — STEVAL-SILPLC01 pair
 
-## Power and reset
+Two independent RTK GNSS receivers, one per board, each over its own point-to-point RS-485 link. Full sensor + compute diversity — no shared component between the two channels.
 
-- Clean single-rail 3.3 V or 5 V supply with proper decoupling. Check the hardware design guidelines for the core supply scheme (internal regulator or external).
-- An independent safety watchdog and voltage monitor outside the MCU. A safety SBC such as NXP's FS26 or FS23 is the usual choice. It can also hold your outputs in the safe state if the MCU dies.
+```
+ GNSS A                              GNSS B
+ (RTK)                               (RTK)
+   │ RS-485 (point-to-point)           │ RS-485 (point-to-point)
+   ▼                                   ▼
++-------------------+             +-------------------+
+| Board A (SILPLC01) |           | Board B (SILPLC01) |
+| ubx-c parser       |           | ubx-c parser       |
+| + geofence check   |           | + geofence check   |
++---------+---------+             +---------+---------+
+          │ trip = open                     │ trip = open
+          ▼                                 ▼
+   [ IPS160HF leg A ]                  [ IPS160HF leg B ]
+          │                                    │
+          └─────────────┬──────────────────────┘
+                        ▼
+              Main control circuit
+           (series legs — either trip opens it)
+```
 
-## Clock
+## Per-board pipeline
+1. UART/RS-485 (STM32H723 USART, hardware DE/RE) → ring buffer → `ubx_parser_feed()`, byte-wise, in the safety task cycle.
+2. On `UBX_PARSE_FRAME_COMPLETE` for NAV-PVT: `ubx_nav_pvt_decode()`.
+3. Gate on quality: `fix_type == 3D`, carrier solution = RTK fixed, `horizontal_accuracy` under threshold. Anything worse → treated as unknown position.
+4. Convert lat/lon (int32, 1e-7°) to local ENU metres, point-in-polygon vs. stored boundary, with hysteresis margin (no chatter at the edge).
+5. Fault counters: checksum errors, `UBX_PARSE_OVERSIZE`, fix-age timeout, bus silence. Any sustained fault → trip.
 
-- An external crystal (8 to 40 MHz) on FXOSC, monitored by the CMU against an internal oscillator.
+## Trip logic
+- Each board drives one leg of a series-wired safety circuit. Either board tripping (geofence or fault) opens the whole circuit — no cross-comms required for the safety function itself, only for diagnostics/logging.
+- Default state on boot: open, until both channels independently confirm RTK-fixed + in-polygon.
+- Re-close after a trip: require re-entry past the hysteresis margin **and** a latched/manual reset — this is a safety function, not a convenience one.
 
-## Shutoff path
+## Why two receivers
+With one shared GNSS, a single antenna/cable/jamming fault takes out both channels at once — you only get compute diversity, not sensor diversity. Two independent receivers close that gap: a fault in one GNSS path still leaves the other channel able to make an independent (fail-safe) call.
 
-- Fail-safe by design: losing power, clock or software must de-energise the motor.
-- Use a dynamic enable (a toggling signal, not a static GPIO level), so a stuck pin can't hold power on.
-- Two independent ways to cut the 48 V, for example the driver's STO or enable input plus a contactor or high-side switch. For Category 3, either channel alone must be able to trip.
-- Read back the actual state of the shutoff, and test it periodically.
+This [UBX Lib](https://github.com/samuk/ubx-c) might be useful
 
-## UART to the F9P
+Or possibly [FRDM-A-S32K358](https://www.nxp.com/design/design-center/development-boards-and-designs/FRDM-A-S32K358) but that would be more certification work.
 
-- LPUART, with DMA if you want it. Use UBX binary, not NMEA.
-- Treat the F9P as untrusted. It has no safety certification.
-- Check the UBX Fletcher checksum, message timeout, fix type and validity flags, accuracy estimates and the jamming/spoofing indicators. Treat a missing or stale message as outside the fence.
-- The pair should cross-check each other's position over a separate link. GNSS alone is a weak input for PLd if spoofing or multipath are in scope, so consider an independent plausibility source such as odometry or an IMU.
 
-## Chip safety features
 
-- FCCU (fault collection), with its fault outputs wired to your shutoff
-- STCU2 with LBIST/MBIST at start-up
-- ECC and the error reporting module
-- MPU and XRDC, for freedom from interference
-- SWT software watchdog, with windowed servicing
-- CRC hardware, for flash and geofence data checks
-- Voltage, temperature and clock monitors
-- Lockstep on the core we run the geofence on, if you want a higher diagnostic coverage figure
 
-## Geofence data
 
-- Two copies with CRC in data flash, checked at boot and periodically.
 
-## Debug and production
 
-- 10-pin Cortex debug header for development, then lock debug access in production.
+
+
+
+
+
+
+
 
 ## Below notes on the template used in this repo
 
