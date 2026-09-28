@@ -2,7 +2,7 @@
 
 A project to do a PCB and C code for a failsafe Geofence that could in principle meet safety standards
 
-Target dev board is [https://www.nxp.com/design/design-center/development-boards-and-designs/FRDM-A-S32K358](FRDM-A-S32K358)
+Target dev board is [FRDM-A-S32K358](https://www.nxp.com/design/design-center/development-boards-and-designs/FRDM-A-S32K358)
 
 - Up to three Arm Cortex-M7 cores at 240 MHz, with a lockstep option on the core pairs
 - About 8 MB flash and roughly 1 MB or more SRAM, all with ECC, plus tightly coupled memory and caches
