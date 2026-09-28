@@ -32,7 +32,7 @@ Two independent RTK GNSS receivers, one per board, each over its own point-to-po
 1. UART/RS-485 (STM32H723 USART, hardware DE/RE) → ring buffer → `ubx_parser_feed()`, byte-wise, in the safety task cycle.
 2. On `UBX_PARSE_FRAME_COMPLETE` for NAV-PVT: `ubx_nav_pvt_decode()`.
 3. Gate on quality: `fix_type == 3D`, carrier solution = RTK fixed, `horizontal_accuracy` under threshold. Anything worse → treated as unknown position.
-4. Convert lat/lon (int32, 1e-7°) to local ENU metres, point-in-polygon vs. stored boundary, with hysteresis margin (no chatter at the edge).
+4. Convert lat/lon (int32, 1e-7°) to local ENU metres, [point-in-polygon](https://wrfranklin.org/Research/Short_Notes/pnpoly.html) vs. stored boundary, with hysteresis margin (no chatter at the edge).
 5. Fault counters: checksum errors, `UBX_PARSE_OVERSIZE`, fix-age timeout, bus silence. Any sustained fault → trip.
 
 ## Trip logic
