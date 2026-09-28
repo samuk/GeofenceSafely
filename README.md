@@ -1,6 +1,6 @@
 # Geofence
 
-A project to do a PCB and C code for a failsafe Geofence that could in principle meet safety standards
+A project to do identify appropriate hardware and write C code for a failsafe Geofence that could in principle meet [ISO 18497-3:2024](https://github.com/Agroecology-Lab/feldfreund_devkit_ros/blob/caatinga-dev/safety_roadmap.md#6-regulatory-compliance) in an affordable way
 
 Target dev board is  [Silplc01](https://www.st.com/en/evaluation-tools/steval-silkt01.html) officially assessed by TÜV Italia (TÜV SUD Group) in compliance with SIL 2 / PL d requirements: random failure rates, systematic capability (for the hardware), architectural constraints in accordance with IEC 61508, EN 62061, EN ISO 13849-1, and EN ISO 13849-2 standards.
 
