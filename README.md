@@ -20,7 +20,7 @@ Target dev board is [FRDM-A-S32K358](https://www.nxp.com/design/design-center/de
 
 - An external crystal (8 to 40 MHz) on FXOSC, monitored by the CMU against an internal oscillator.
 
-## Shutoff path 
+## Shutoff path
 
 - Fail-safe by design: losing power, clock or software must de-energise the motor.
 - Use a dynamic enable (a toggling signal, not a static GPIO level), so a stuck pin can't hold power on.
@@ -34,7 +34,7 @@ Target dev board is [FRDM-A-S32K358](https://www.nxp.com/design/design-center/de
 - Check the UBX Fletcher checksum, message timeout, fix type and validity flags, accuracy estimates and the jamming/spoofing indicators. Treat a missing or stale message as outside the fence.
 - The pair should cross-check each other's position over a separate link. GNSS alone is a weak input for PLd if spoofing or multipath are in scope, so consider an independent plausibility source such as odometry or an IMU.
 
-## Chip safety features 
+## Chip safety features
 
 - FCCU (fault collection), with its fault outputs wired to your shutoff
 - STCU2 with LBIST/MBIST at start-up
