@@ -12,6 +12,7 @@ Two independent RTK GNSS receivers, one per board, each over its own point-to-po
  GNSS A                              GNSS B
  (RTK)                               (RTK)
    │ RS-485 (point-to-point)           │ RS-485 (point-to-point)
+   |                                   | - - Robot compute is a third, receive-only node on each RS-485 strictly listen-only
    ▼                                   ▼
 +-------------------+             +-------------------+
 | Board A (SILPLC01) |           | Board B (SILPLC01) |
