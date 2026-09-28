@@ -1,25 +1,59 @@
-# STM32 Project Template
+# Geofence
 
-This repository contains a project template for STM32-based firmware projects.
-It features a modern, CMake-based build system, documentation generation with
-Doxygen, source code formatting with clang-format, linting, enforcing style and
-naming conventions with clang-tidy, verifying MISRA C compliance with Cppcheck,
-devcontainer support, proven and scalable folder organization and more.
+A project to do a PCB and C code for a failsafe Geofence that could in principle meet safety standards
 
-The project template runs on a
-[STM32L496 Discovery](https://www.st.com/en/evaluation-tools/32l496gdiscovery.html)
-board out of the box. By default, the debug configuration is set up with a
-SEGGER J-Link debug probe. SEGGER offers a tool to convert the onboard ST-Link
-debugger on Discovery and Nucleo boards into a SEGGER J-Link debugger. The
-onboard ST-Link debugger on the STM32L496 Discovery board used in this project
-was converted to a J-Link debugger
-[with this tool](https://www.segger.com/products/debug-probes/j-link/models/other-j-links/st-link-on-board/).
+Target dev board is [FRDM-A-S32K358]https://www.nxp.com/design/design-center/development-boards-and-designs/FRDM-A-S32K358)
 
-[https://akospasztor.github.io/stm32-project-template/](https://akospasztor.github.io/stm32-project-template/)
+- Up to three Arm Cortex-M7 cores at 240 MHz, with a lockstep option on the core pairs
+- About 8 MB flash and roughly 1 MB or more SRAM, all with ECC, plus tightly coupled memory and caches
+- 128 KB data flash (usable for EEPROM emulation)
+- ISO 26262 ASIL D-capable, with a Safety Manual and FMEDA available from NXP
+- Packages: 172 HDQFP and 289 MAPBGA
+- Supply: 3.3 V or 5 V I/O
 
-[![CI Pipeline](https://github.com/akospasztor/stm32-project-template/actions/workflows/ci-pipeline.yml/badge.svg)](https://github.com/akospasztor/stm32-project-template/actions/workflows/ci-pipeline.yml)
+## Power and reset
 
-## Contents
+- Clean single-rail 3.3 V or 5 V supply with proper decoupling. Check the hardware design guidelines for the core supply scheme (internal regulator or external).
+- An independent safety watchdog and voltage monitor outside the MCU. A safety SBC such as NXP's FS26 or FS23 is the usual choice. It can also hold your outputs in the safe state if the MCU dies.
+
+## Clock
+
+An external crystal (8 to 40 MHz) on FXOSC, monitored by the CMU against an internal oscillator.
+
+## Shutoff path 
+
+Fail-safe by design: losing power, clock or software must de-energise the motor.
+Use a dynamic enable (a toggling signal, not a static GPIO level), so a stuck pin can't hold power on.
+Two independent ways to cut the 48 V, for example the driver's STO or enable input plus a contactor or high-side switch. For Category 3, either channel alone must be able to trip.
+Read back the actual state of the shutoff, and test it periodically.
+
+## UART to the F9P
+
+LPUART, with DMA if you want it. Use UBX binary, not NMEA.
+Treat the F9P as untrusted. It has no safety certification.
+Check the UBX Fletcher checksum, message timeout, fix type and validity flags, accuracy estimates and the jamming/spoofing indicators. Treat a missing or stale message as outside the fence.
+The pair should cross-check each other's position over a separate link. GNSS alone is a weak input for PLd if spoofing or multipath are in scope, so consider an independent plausibility source such as odometry or an IMU.
+
+## Chip safety features 
+
+- FCCU (fault collection), with its fault outputs wired to your shutoff
+- STCU2 with LBIST/MBIST at start-up
+- ECC and the error reporting module
+- MPU and XRDC, for freedom from interference
+- SWT software watchdog, with windowed servicing
+- CRC hardware, for flash and geofence data checks
+- Voltage, temperature and clock monitors
+- Lockstep on the core we run the geofence on, if you want a higher diagnostic coverage figure
+
+## Geofence data
+
+- Two copies with CRC in data flash, checked at boot and periodically.
+
+## Debug and production
+
+- 10-pin Cortex debug header for development, then lock debug access in production.
+
+## Below notes on the template used in this repo
 
 - [Contents](#contents)
 - [Usage](#usage)
