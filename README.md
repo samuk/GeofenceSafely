@@ -4,6 +4,8 @@ A project to do identify appropriate hardware and write C code for a failsafe Ge
 
 Target dev board is  [Silplc01](https://www.st.com/en/evaluation-tools/steval-silkt01.html) officially assessed by TÜV Italia (TÜV SUD Group) in compliance with SIL 2 / PL d requirements: random failure rates, systematic capability (for the hardware), architectural constraints in accordance with IEC 61508, EN 62061, EN ISO 13849-1, and EN ISO 13849-2 standards.
 
+Target RTK is u-blox ZED-A20K (variant ZED-A20K-01A)  ASIL-B (ISO 26262) certified. (Not PL d but the best that exists)
+
 # Geofence trip function — STEVAL-SILPLC01 pair
 
 Two independent RTK GNSS receivers, one per board, each over its own point-to-point RS-485 link. Full sensor + compute diversity — no shared component between the two channels.
